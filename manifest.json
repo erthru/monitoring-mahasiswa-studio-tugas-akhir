@@ -1,0 +1,17 @@
+{
+  "name": "Monitoring Mahasiswa Studio Tugas Akhir",
+  "short_name": "Studio TA",
+  "description": "Visualisasi Jadwal dan Progress Evaluasi Studio Tugas Akhir",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
