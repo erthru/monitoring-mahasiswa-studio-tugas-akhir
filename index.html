@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitoring Mahasiswa Studio Tugas Akhir</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-hover: #4f46e5;
+        --bg-body: #f8fafc;
+        --bg-card: #ffffff;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+
+        /* Color Map Integration */
+        --status-pending: #94a3b8; /* #ffffff interpreted as neutral gray for UI */
+        --status-done: #ffff00; /* #ffff00 Yellow */
+        --status-partial: #ff9900; /* #ff9900 Orange */
+        --status-overdue: #999999; /* #999999 Abu-abu */
+        --status-exit: #22c55e; /* #00ff00 Hijau */
+        --status-entry: #3b82f6; /* #5a9bd5 Biru */
+        --status-alert: #ef4444; /* #ff0000 Merah */
+
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md:
+          0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg:
+          0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Outfit", sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        line-height: 1.5;
+        padding: 2rem 1rem;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(to right, var(--primary), #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+      }
+
+      header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+      }
+
+      /* Search & Filter Bar */
+      .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 3rem;
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .search-wrapper {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 0.875rem 1rem 0.875rem 3rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        font-size: 0.95rem;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+      }
+
+      .filter-select {
+        flex: 0 0 auto;
+        min-width: 180px;
+        padding: 0.875rem 2.5rem 0.875rem 1rem; /* Added right padding for icon */
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        font-size: 0.95rem;
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        outline: none;
+        transition: all 0.3s ease;
+        appearance: none; /* Hide default arrow */
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+      }
+
+      .search-input:focus,
+      .filter-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+
+      @media (max-width: 768px) {
+        .filter-container {
+          flex-direction: column;
+        }
+        .filter-select,
+        .search-wrapper {
+          width: 100%;
+        }
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--bg-card);
+        border-radius: 1rem;
+        border: 1px dashed var(--border-color);
+      }
+
+      .empty-state i {
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+      }
+
+      /* Loading State */
+      #loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+        gap: 1rem;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top: 4px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Month Section */
+      .month-section {
+        margin-bottom: 3rem;
+      }
+
+      .month-header {
+        position: sticky;
+        top: 0;
+        background-color: rgba(248, 250, 252, 0.9);
+        backdrop-filter: blur(8px);
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 10;
+      }
+
+      .month-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      .month-badge {
+        background: var(--primary);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      /* Grid Layout */
+      .student-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 1.5rem;
+      }
+
+      @media (max-width: 480px) {
+        .student-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Student Card */
+      .card {
+        background: var(--bg-card);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .student-info h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.25rem;
+      }
+
+      .student-info p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .status-pill {
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        color: white; /* Most custom colors are dark enough for white text */
+      }
+
+      .status-pending {
+        background: var(--status-pending);
+        color: white;
+      }
+      .status-done {
+        background: var(--status-done);
+        color: #78350f;
+      } /* Dark text for yellow */
+      .status-partial {
+        background: var(--status-partial);
+        color: white;
+      }
+      .status-overdue {
+        background: var(--status-overdue);
+        color: white;
+      }
+      .status-exit {
+        background: var(--status-exit);
+        color: white;
+      }
+      .status-entry {
+        background: var(--status-entry);
+        color: white;
+      }
+      .status-alert {
+        background: var(--status-alert);
+        color: white;
+      }
+
+      /* Progress Timeline */
+      .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        position: relative;
+        padding-left: 1.5rem;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        bottom: 5px;
+        width: 2px;
+        background: var(--border-color);
+      }
+
+      .timeline-item {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .timeline-dot {
+        position: absolute;
+        left: -21px;
+        top: 6px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--border-color);
+        z-index: 1;
+      }
+
+      .timeline-item.active .timeline-dot {
+        border-color: var(--primary);
+        background: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      }
+
+      .timeline-item.completed .timeline-dot {
+        border-color: var(--status-exit);
+        background: var(--status-exit);
+      }
+
+      .timeline-item.warning .timeline-dot {
+        border-color: var(--status-done);
+        background: var(--status-done);
+      }
+
+      .timeline-item.error .timeline-dot {
+        border-color: var(--status-alert);
+        background: var(--status-alert);
+      }
+
+      .timeline-item.partial .timeline-dot {
+        border-color: var(--status-partial);
+        background: var(--status-partial);
+      }
+
+      .timeline-item.overdue .timeline-dot {
+        border-color: var(--status-overdue);
+        background: var(--status-overdue);
+      }
+
+      .timeline-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+      }
+
+      .timeline-content {
+        font-size: 0.875rem;
+        color: var(--text-main);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .timeline-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: var(--bg-body);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+      }
+
+      /* Pembimbing Section */
+      .pembimbing {
+        background: var(--bg-body);
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.8125rem;
+      }
+
+      .pembimbing-title {
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .pembimbing-list {
+        color: var(--text-main);
+        white-space: pre-line;
+        line-height: 1.4;
+      }
+
+      /* Footer/Keterangan */
+      .card-footer {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px dashed var(--border-color);
+      }
+
+      .keterangan-text {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Monitoring Mahasiswa Studio Tugas Akhir</h1>
+        <p>Visualisasi Jadwal dan Progress Evaluasi Studio</p>
+      </header>
+
+      <div class="filter-container">
+        <div class="search-wrapper">
+          <i
+            data-lucide="search"
+            class="search-icon"
+            style="width: 18px; height: 18px"
+          ></i>
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Cari Nama, NIM, atau Pembimbing..."
+            autocomplete="off"
+          />
+        </div>
+        <select id="month-filter" class="filter-select">
+          <option value="">Semua Bulan</option>
+        </select>
+        <select id="status-filter" class="filter-select">
+          <option value="">Semua Status</option>
+          <option value="Belum Mulai">Belum Mulai</option>
+          <option value="Sudah Selesai Ujian Evaluasi">
+            Sudah Selesai Ujian Evaluasi
+          </option>
+          <option value="Ujian Evaluasi Hanya Ke 1 Dosen Pembimbing">
+            Ujian Evaluasi Hanya Ke 1 Dosen Pembimbing
+          </option>
+          <option value="Belum Evaluasi, Sudah Lewat Jadwal Evaluasi">
+            Belum Evaluasi, Sudah Lewat Jadwal Evaluasi
+          </option>
+          <option value="Sudah Keluar Studio">Sudah Keluar Studio</option>
+          <option value="Masuk Studio">Masuk Studio</option>
+          <option value="Sudah Ujian">Sudah Ujian</option>
+        </select>
+      </div>
+
+      <div id="loading">
+        <div class="spinner"></div>
+        <p>Memuat data mahasiswa...</p>
+      </div>
+
+      <div id="app"></div>
+    </div>
+
+    <script>
+      const app = document.getElementById("app");
+      const loading = document.getElementById("loading");
+      const searchInput = document.getElementById("search-input");
+      const monthFilter = document.getElementById("month-filter");
+      const statusFilter = document.getElementById("status-filter");
+      let allData = null;
+
+      const formatDate = (dateStr) => {
+        if (!dateStr) return "-";
+        try {
+          const date = new Date(dateStr);
+          return new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }).format(date);
+        } catch (e) {
+          return dateStr;
+        }
+      };
+
+      const getStatusColor = (status) => {
+        if (!status) return "status-pending";
+        const s = status.trim();
+
+        if (s === "Belum Mulai") return "status-pending";
+        if (s === "Sudah Selesai Ujian Evaluasi") return "status-done";
+        if (s.includes("Hanya Ke 1 Dosen")) return "status-partial";
+        if (s === "Belum Evaluasi, Sudah Lewat Jadwal Evaluasi")
+          return "status-overdue";
+        if (s === "Sudah Keluar Studio") return "status-exit";
+        if (s === "Masuk Studio") return "status-entry";
+        if (s === "Sudah Ujian") return "status-alert";
+
+        // Fallback checks
+        if (s.includes("Selesai") || s.includes("Keluar")) return "status-exit";
+        if (s.includes("Lewat") || s.includes("Belum")) return "status-overdue";
+        return "status-info";
+      };
+
+      const getTimelineItemClass = (status) => {
+        if (!status) return "";
+        const s = status.trim();
+
+        if (s === "Sudah Keluar Studio") return "completed";
+        if (s === "Sudah Selesai Ujian Evaluasi") return "warning"; // Yellow as per map
+        if (s === "Sudah Ujian") return "error"; // Red as per map
+        if (s === "Belum Evaluasi, Sudah Lewat Jadwal Evaluasi")
+          return "overdue";
+        if (s.includes("Hanya Ke 1 Dosen")) return "partial";
+        if (s === "Belum Mulai") return "";
+
+        return "active";
+      };
+
+      const renderDashboard = (data) => {
+        loading.style.display = "none";
+
+        const hasData = Object.keys(data).length > 0;
+
+        if (!hasData) {
+          app.innerHTML = `
+            <div class="empty-state">
+              <i data-lucide="user-x" style="width:48px; height:48px; margin: 0 auto 1rem;"></i>
+              <h3>Mahasiswa tidak ditemukan</h3>
+              <p>Tidak ada mahasiswa dengan kriteria tersebut.</p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        let html = "";
+        for (const month in data) {
+          const students = data[month];
+          html += `
+                    <section class="month-section">
+                        <div class="month-header">
+                            <i data-lucide="calendar"></i>
+                            <h2>${month}</h2>
+                            <span class="month-badge">${students.length} Mahasiswa</span>
+                        </div>
+                        <div class="student-grid">
+                            ${students
+                              .map(
+                                (s) => `
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="student-info">
+                                            <h3>${s.Nama}</h3>
+                                            <p><i data-lucide="credit-card" style="width:14px"></i> ${s.NIM}</p>
+                                        </div>
+                                        <span class="status-pill ${getStatusColor(s.Keterangan)}">
+                                            ${s.StatusWaktuAnimasi || "Progress"}
+                                        </span>
+                                    </div>
+
+                                    <div class="timeline">
+                                        <div class="timeline-item ${getTimelineItemClass(s.StatusEvaluasi1)}">
+                                            <div class="timeline-dot"></div>
+                                            <span class="timeline-label">Evaluasi 1</span>
+                                            <div class="timeline-content">
+                                                <span>${s.StatusEvaluasi1}</span>
+                                                <span class="timeline-date">${formatDate(s.Evaluasi1)}</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item ${getTimelineItemClass(s.StatusEvaluasi2)}">
+                                            <div class="timeline-dot"></div>
+                                            <span class="timeline-label">Evaluasi 2</span>
+                                            <div class="timeline-content">
+                                                <span>${s.StatusEvaluasi2}</span>
+                                                <span class="timeline-date">${formatDate(s.Evaluasi2)}</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item ${getTimelineItemClass(s.StatusEvaluasi3)}">
+                                            <div class="timeline-dot"></div>
+                                            <span class="timeline-label">Evaluasi 3</span>
+                                            <div class="timeline-content">
+                                                <span>${s.StatusEvaluasi3}</span>
+                                                <span class="timeline-date">${formatDate(s.Evaluasi3)}</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item ${getTimelineItemClass(s.StatusWaktuAnimasi)}">
+                                            <div class="timeline-dot"></div>
+                                            <span class="timeline-label">Keluar Studio</span>
+                                            <div class="timeline-content">
+                                                <span>${s.StatusWaktuAnimasi}</span>
+                                                <span class="timeline-date">${formatDate(s.WaktuAnimasi)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pembimbing">
+                                        <div class="pembimbing-title">
+                                            <i data-lucide="users" style="width:14px"></i>
+                                            Dosen Pembimbing
+                                        </div>
+                                        <div class="pembimbing-list">${s.Pembimbing}</div>
+                                    </div>
+
+                                    <div class="card-footer">
+                                        <div class="keterangan-text">
+                                            <strong>Catatan:</strong> ${s.Keterangan}
+                                        </div>
+                                    </div>
+                                </div>
+                            `,
+                              )
+                              .join("")}
+                        </div>
+                    </section>
+                `;
+        }
+
+        app.innerHTML = html;
+        lucide.createIcons();
+      };
+
+      const populateMonthFilter = (data) => {
+        const months = Object.keys(data);
+        monthFilter.innerHTML =
+          '<option value="">Semua Bulan</option>' +
+          months.map((m) => `<option value="${m}">${m}</option>`).join("");
+      };
+
+      const handleFilter = () => {
+        if (!allData) return;
+
+        const query = searchInput.value.toLowerCase().trim();
+        const selectedMonth = monthFilter.value;
+        const selectedStatus = statusFilter.value;
+
+        const filtered = Object.keys(allData).reduce((acc, month) => {
+          // Month filtering
+          if (selectedMonth && month !== selectedMonth) return acc;
+
+          const matched = allData[month].filter((s) => {
+            // Name/NIM/Pembimbing search
+            const matchesSearch =
+              s.Nama.toLowerCase().includes(query) ||
+              (s.NIM && s.NIM.toString().includes(query)) ||
+              (s.Pembimbing && s.Pembimbing.toLowerCase().includes(query));
+
+            // Status filtering
+            const matchesStatus =
+              !selectedStatus ||
+              (s.Keterangan && s.Keterangan.includes(selectedStatus)) ||
+              (s.StatusWaktuAnimasi &&
+                s.StatusWaktuAnimasi.includes(selectedStatus)) ||
+              (s.StatusEvaluasi3 && s.StatusEvaluasi3.includes(selectedStatus));
+
+            return matchesSearch && matchesStatus;
+          });
+
+          if (matched.length) acc[month] = matched;
+          return acc;
+        }, {});
+
+        renderDashboard(filtered);
+      };
+
+      const fetchData = async () => {
+        try {
+          const url = `https://script.google.com/macros/s/AKfycbwZd1f1cdffe91OM319vSPBiRtPQcEedffazCMLjcKf5MWfbFR-gzWyNeHXQkOU9gTa/exec?time=${new Date().getTime()}`;
+          const response = await fetch(url);
+          const data = await response.json();
+          allData = data;
+          populateMonthFilter(data);
+          renderDashboard(data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          loading.innerHTML = `<p style="color:var(--status-alert)">Gagal memuat data. Silakan coba lagi nanti.</p>`;
+        }
+      };
+
+      searchInput.addEventListener("input", handleFilter);
+      monthFilter.addEventListener("change", handleFilter);
+      statusFilter.addEventListener("change", handleFilter);
+
+      fetchData();
+    </script>
+  </body>
+</html>
