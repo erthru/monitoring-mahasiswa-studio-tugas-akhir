@@ -33,7 +33,7 @@
         --border-color: #e2e8f0;
 
         /* Color Map Integration */
-        --status-pending: #94a3b8;
+        --status-pending: #d9dbdd;
         --status-done: #ffff00; /* Yellow */
         --status-partial: #ff9900; /* Orange */
         --status-overdue: #999999; /* Grey */
@@ -257,6 +257,7 @@
 
       .status-pending {
         background: var(--status-pending);
+        color: var(--text-main);
       }
       .status-done {
         background: var(--status-done);
@@ -338,6 +339,10 @@
       .timeline-item.overdue .timeline-dot {
         border-color: var(--status-overdue);
         background: var(--status-overdue);
+      }
+      .timeline-item.pending .timeline-dot {
+        border-color: var(--status-pending);
+        background: var(--status-pending);
       }
 
       .timeline-label {
@@ -539,6 +544,7 @@
         if (t === "Belum Evaluasi, Sudah Lewat Jadwal Evaluasi")
           return "overdue";
         if (t.includes("Hanya Ke 1 Dosen")) return "partial";
+        if (t === "Belum Mulai") return "pending";
 
         // Fallback keyword checks
         if (t.includes("Selesai") || t.includes("Keluar")) return "completed";
@@ -599,7 +605,7 @@
                       <div class="timeline-dot"></div>
                       <span class="timeline-label">Keluar Studio</span>
                       <div class="timeline-content">
-                        <span>${s.StatusWaktuAnimasi}</span>
+                        <span>${s.StatusWaktuAnimasi === "Belum Mulai" ? "Belum Keluar" : s.StatusWaktuAnimasi}</span>
                         <span class="timeline-date">${formatDate(s.WaktuAnimasi)}</span>
                       </div>
                     </div>
