@@ -583,7 +583,7 @@
                       <p><i data-lucide="credit-card" style="width: 14px"></i> ${s.NIM}</p>
                     </div>
                     <span class="status-pill ${getStatusColor(s.StatusWaktuAnimasi || s.Keterangan)}">
-                      ${s.StatusWaktuAnimasi || "Progress"}
+                      ${s.StatusWaktuAnimasi === "Belum Mulai" ? "Masih Tahapan Studio Akhir" : s.StatusWaktuAnimasi || "Progress"}
                     </span>
                   </div>
                   <div class="timeline">
